@@ -398,7 +398,7 @@ function _img() {
                         </div>
                         <div class="bottom-box">
                             <p>
-                                <?php echo preg_replace('/-.*$/', '', PHP_VERSION); ?>
+                                PHP <?php echo preg_replace('/-.*$/', '', PHP_VERSION); ?>
                                 -
                                 <?php echo 'Exécuté en ' . (microtime(true)-$s > 1 ? number_format(microtime(true)-$s, 3) . 's' : round((microtime(true)-$s)*1000)) . 'ms'; ?>
                                 -
