@@ -83,7 +83,7 @@ function _adv() {
 }
 
 function _fls() {
-    if (is_disabled('ini_get ini_set error_reporting move_uploaded_file')) return false;
+    if (is_disabled('mkdir rmdir unlink chmod rename copy')) return false;
     if (is_file('test-overcms-files/data.txt'))
         unlink("test-overcms-files/data.txt");
     if (is_dir('test-overcms-files'))
@@ -95,10 +95,12 @@ function _fls() {
     if (!$r) return false;
     $r = rename('test-overcms-files/new-file.txt', 'test-overcms-files/data.txt');
     if (!$r) return false;
+    $r = copy('test-overcms-files/data.txt', 'test-overcms-files/useless.txt');
+    if (!$r) return false;
     $fp = fopen('test-overcms-files/data.txt', 'rw');
     if (!is_resource($fp)) return false;
     if (fread($fp, 1024) !== $rd) return false;
-    $r = unlink("test-overcms-files/data.txt");
+    $r = unlink("test-overcms-files/data.txt") && unlink("test-overcms-files/useless.txt");
     if (!$r) return false;
     $r = rmdir('test-overcms-files');
     if (!$r) return false;
