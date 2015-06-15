@@ -3,8 +3,13 @@
 header('Content-Type: text/html; charset=UTF-8');
 $s = microtime(true);
 
+/* N'affiche aucune erreur */
 function_exists('error_reporting') && error_reporting(0);
 function_exists('ini_set') && ini_set("display_errors", 0);
+
+/* Affiche toutes les erreurs */
+// error_reporting(E_ALL);
+// ini_set('display_errors', true);
 
 $a = array(array(
         'Base de données (au moins un des deux doit fonctionner)', array(
@@ -52,23 +57,23 @@ $n = '<img src="data:image/x-icon;base64,'.
 
 /////////////////////////////////////////////////////////////////////
 
-function is_disabled($l) {
-    foreach (explode(' ', $l) as $f)
-        if (!function_exists($f)) return true;
+function is_disabled($functionList) {
+    foreach (explode(' ', $functionList) as $function)
+        if (!function_exists($function)) return true;
     return false;
 }
 
-function _crl($u, $p = 0) {
+function _crl($url, $port = 0) {
     if (is_disabled('curl_init') || !extension_loaded('curl')) return false;
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_HEADER, false);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-    curl_setopt($ch, CURLOPT_URL, $u);
-    if ($p) curl_setopt($ch, CURLOPT_PORT, $p);
-    $o = curl_exec($ch);
+    curl_setopt($ch, CURLOPT_URL, $url);
+    if ($port) curl_setopt($ch, CURLOPT_PORT, $port);
+    $output = curl_exec($ch);
     curl_close($ch);
-    return !empty($o);
+    return !empty($output);
 }
 
 function _adv() {
@@ -84,10 +89,10 @@ function _adv() {
 
 function _fls() {
     if (is_disabled('mkdir rmdir unlink chmod rename copy')) return false;
-    if (is_file('test-overcms-files/data.txt'))
-        unlink("test-overcms-files/data.txt");
-    if (is_dir('test-overcms-files'))
-        rmdir('test-overcms-files');
+    $r = chmod(dirname(__FILE__), 0755);
+    if (!$r) return false;
+    $r = delete_directory('test-overcms-files');
+    if (!$r) return false;
     $r = mkdir('test-overcms-files') && chmod('test-overcms-files', 0755);
     if (!$r) return false;
     $rd = md5(time().rand(1,9999));
@@ -102,13 +107,12 @@ function _fls() {
     if (fread($fp, 1024) !== $rd) return false;
     $r = unlink("test-overcms-files/data.txt") && unlink("test-overcms-files/useless.txt");
     if (!$r) return false;
-    $r = rmdir('test-overcms-files');
+    $r = delete_directory('test-overcms-files');
     if (!$r) return false;
     return true;
 }
 
 function _zip() {
-    chmod(dirname(__FILE__), 0755);
     $r = file_put_contents('test-overcms-files-data.zip', base64_decode(
         'UEsDBAoAAAAIAHUKcEaSYDpXJwAAACUAAAAIAAAAZGF0YS50eHTLL0stSs4tVqjKLFBIrShJzSvOzM9TyCxWKM8vys7MS1dIy8xLBQBQSwECCgAKAAAACAB1CnBGkmA6VycAAAAlAAAACAAAAAAAAAAAACAAAAAAAAAAZGF0YS50eHRQSwUGAAAAAAEAAQA2AAAATQAAAAAA'
     ));
@@ -170,6 +174,18 @@ function _img() {
     $im = @imagecreatefromstring(base64_decode($data));
     if (!is_resource($im)) return false;
     return (imagesx($im) === 28 && imagesy($im) === 18);
+}
+
+function delete_directory($dir) {
+    $dir = rtrim($dir, DIRECTORY_SEPARATOR);
+    if (!file_exists($dir)) return true;
+    if (!is_dir($dir) || is_link($dir)) return unlink($dir);
+    chmod($dir, 0755);
+    foreach (scandir($dir) as $file) {
+        if ($file === '.' || $file === '..') continue;
+        if (!delete_directory($dir . DIRECTORY_SEPARATOR . $file)) return false;
+    }
+    return rmdir($dir);
 }
 
 ?><!DOCTYPE html>
