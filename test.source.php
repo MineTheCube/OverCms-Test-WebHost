@@ -78,7 +78,7 @@ function _crl($url, $port = 0) {
 
 function _adv() {
     if (is_disabled('ini_get ini_set error_reporting move_uploaded_file')) return false;
-    if (ini_get('safe_mode')) return false;
+    if (filter_var(ini_get('safe_mode'), FILTER_VALIDATE_BOOLEAN)) return false;
     $d = ini_get('session.name');
     if (empty($d)) return false;
     $r = ini_set('session.name', 'PHP_SESSION_CUSTOM');
@@ -105,6 +105,8 @@ function _fls() {
     $fp = fopen('test-overcms-files/data.txt', 'rw');
     if (!is_resource($fp)) return false;
     if (fread($fp, 1024) !== $rd) return false;
+    $r = fclose($fp);
+    if (!$r) return false;
     $r = unlink("test-overcms-files/data.txt") && unlink("test-overcms-files/useless.txt");
     if (!$r) return false;
     $r = delete_directory('test-overcms-files');
@@ -125,8 +127,10 @@ function _zip() {
         $fp = $zip->getStream($n);
         if (!$fp) return false;
         $r = fread($fp, 1024);
+        fclose($fp);
         $a = ($r === 'overcms zip extension is working fine' && $n === 'data.txt');
     }
+    $zip->close();
     if (is_file('test-overcms-files-data.zip'))
         unlink('test-overcms-files-data.zip');
     return $a;
